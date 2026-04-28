@@ -120,11 +120,11 @@ def profile_page():
 
 @app.route("/signin", methods=["GET"])
 def signin_page():
-    return render_template("signin.html")
+    return render_template("signiin.html")
 
 @app.route("/signup", methods=["GET"])
 def signup_page():
-    return render_template("signup.html")
+    return render_template("signuup.html")
 
 @app.route("/health", methods=["GET"])
 def health():
