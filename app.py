@@ -112,11 +112,11 @@ def about_page():
 
 @app.route("/contact", methods=["GET"])
 def contact_page():
-    return render_template("contact.html")
+    return render_template("coontact.html")
 
 @app.route("/profile", methods=["GET"])
 def profile_page():
-    return render_template("profile.html")
+    return render_template("proofile.html")
 
 @app.route("/signin", methods=["GET"])
 def signin_page():
