@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — CargoPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.profile-page {
+  min-height: 100vh;
+  background: var(--bg-900);
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 40%,
+    rgba(245,158,11,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 540px;
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 52px 48px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.profile-icon-wrap {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--amber-glow);
+  border: 2px solid var(--border-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 28px;
+  color: var(--amber);
+}
+
+.profile-card h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.profile-card p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.profile-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.profile-divider::before,
+.profile-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.profile-divider span {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.btn-profile-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--amber);
+  color: #1C1917;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-profile-signin:hover {
+  background: var(--amber-light);
+  transform: translateY(-2px);
+  color: #1C1917;
+}
+
+.btn-profile-signup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.btn-profile-signup:hover {
+  border-color: var(--amber);
+  background: var(--amber-glow);
+  color: var(--amber);
+  transform: translateY(-2px);
+}
+
+.profile-features {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 36px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.profile-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.profile-feature svg {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+/* Floating chips background */
+.profile-chips-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.float-chip {
+  position: absolute;
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 1px;
+  opacity: 0.5;
+  animation: float-drift 8s ease-in-out infinite;
+}
+
+.float-chip:nth-child(1) { top: 15%; left: 6%; animation-delay: 0s; }
+.float-chip:nth-child(2) { top: 25%; right: 7%; animation-delay: 1.5s; }
+.float-chip:nth-child(3) { bottom: 28%; left: 8%; animation-delay: 3s; }
+.float-chip:nth-child(4) { bottom: 20%; right: 6%; animation-delay: 2s; }
+.float-chip:nth-child(5) { top: 55%; left: 4%; animation-delay: 4s; }
+.float-chip:nth-child(6) { top: 60%; right: 5%; animation-delay: 0.5s; }
+
+@keyframes float-drift {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 600px) {
+  .profile-card {
+    padding: 36px 24px;
+    border-radius: 14px;
+  }
+  .profile-card h1 { font-size: 30px; }
+  .float-chip { display: none; }
+  .profile-features { gap: 16px; }
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><rect x="19" y="14" width="5" height="4" rx="0.5" fill="#7DD3FC" opacity="0.8"/></svg>
+    CargoPath
+  </a>
+  <ul class="nav-links" id="navMenu">
+    <li><a href="/">Home</a></li>
+    <li><a href="/route-planner">Route Planner</a></li>
+    <li><a href="/history">Route History</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/profile" class="nav-profile active">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Profile
+    </a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="profile-page">
+  <div class="profile-hero">
+    <!-- floating background chips -->
+    <div class="profile-chips-bg">
+      <span class="float-chip">DEL → MUM</span>
+      <span class="float-chip">BLR → HYD</span>
+      <span class="float-chip">Route Saved</span>
+      <span class="float-chip">CHE → KOL</span>
+      <span class="float-chip">₹ Profit +18%</span>
+      <span class="float-chip">AI Routing</span>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-icon-wrap">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </div>
+
+      <h1>Your Profile</h1>
+      <p>Sign in to access your route history, saved cargo preferences, and personalised AI-powered logistics insights.</p>
+
+      <div class="profile-divider"><span>Choose an option</span></div>
+
+      <div class="profile-actions">
+        <a href="/signin" class="btn-profile-signin">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Sign In
+        </a>
+        <a href="/signup" class="btn-profile-signup">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+          Create Account
+        </a>
+      </div>
+
+      <div class="profile-features">
+        <div class="profile-feature">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Route History
+        </div>
+        <div class="profile-feature">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Saved Preferences
+        </div>
+        <div class="profile-feature">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          AI Insights
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:12px">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/></svg>
+        CargoPath
+      </a>
+      <p>Damage-aware cargo routing powered by Modified Dijkstra &amp; Gemini AI.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Navigation</h4>
+      <a href="/route-planner">Route Planner</a>
+      <a href="/history">Route History</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="/profile">Profile</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 CargoPath. Built with Flask + Modified Dijkstra + Gemini AI.</p></div>
+</footer>
+
+<script>
+document.getElementById('navToggle').addEventListener('click', () =>
+  document.getElementById('navMenu').classList.toggle('open'));
+</script>
+</body>
+</html>

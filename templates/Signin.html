@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — CargoPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-900);
+}
+
+/* LEFT PANEL — branding */
+.auth-left {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #0f0d0b 0%, #1a1410 50%, #0f0d0b 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+}
+.auth-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 30% 50%,
+    rgba(245,158,11,0.10) 0%, transparent 65%);
+}
+.auth-left-content { position: relative; z-index: 1; }
+.auth-brand {
+  display: flex; align-items: center; gap: 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px; font-weight: 700; letter-spacing: 1px;
+  color: var(--text-primary); margin-bottom: 64px;
+  text-decoration: none;
+}
+.auth-headline {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(42px, 5vw, 64px);
+  font-weight: 800; line-height: 1.08;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+.auth-headline span { color: var(--amber); display: block; }
+.auth-sub {
+  font-size: 16px; color: var(--text-secondary);
+  line-height: 1.7; max-width: 380px;
+}
+
+/* Animated truck on auth left */
+.auth-truck-wrap {
+  position: relative; z-index: 1; margin-top: 48px;
+  filter: drop-shadow(0 16px 32px rgba(0,0,0,0.6));
+}
+.auth-truck-wrap svg { width: 100%; max-width: 440px; }
+
+/* Feature chips */
+.auth-chips {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.auth-chip {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+.auth-chip-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: var(--amber-glow); border: 1px solid var(--border-amber);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--amber); flex-shrink: 0;
+}
+.auth-chip-text { font-size: 14px; color: var(--text-secondary); line-height: 1.4; }
+.auth-chip-text strong { display: block; color: var(--text-primary); font-size: 15px; }
+
+/* RIGHT PANEL — form */
+.auth-right {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 32px;
+  background: var(--bg-800);
+  border-left: 1px solid var(--border);
+}
+.auth-form-wrap { width: 100%; max-width: 420px; }
+
+.auth-form-header { margin-bottom: 36px; }
+.auth-form-header h1 {
+  font-size: 36px; font-weight: 800; margin-bottom: 8px;
+}
+.auth-form-header p { font-size: 15px; color: var(--text-secondary); }
+.auth-form-header p a { color: var(--amber); }
+.auth-form-header p a:hover { text-decoration: underline; }
+
+/* Form fields */
+.auth-field { margin-bottom: 20px; }
+.auth-label {
+  display: block;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 8px;
+}
+.auth-input-wrap { position: relative; }
+.auth-input-wrap svg {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none;
+}
+.auth-input {
+  width: 100%;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  padding: 13px 14px 13px 44px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.auth-input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-glow);
+}
+.auth-input.no-icon { padding-left: 14px; }
+
+/* Password toggle */
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.pw-toggle:hover { color: var(--amber); }
+
+/* Error alert */
+.auth-error {
+  background: rgba(252,165,165,0.12);
+  border: 1px solid rgba(252,165,165,0.35);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 14px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+.auth-error.visible { display: flex; }
+
+/* Submit button */
+.auth-submit {
+  width: 100%;
+  background: var(--amber);
+  color: #1C1917;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 800; letter-spacing: 1.5px;
+  padding: 15px;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 8px;
+}
+.auth-submit:hover { background: var(--amber-light); transform: translateY(-1px); }
+.auth-submit:active { transform: translateY(0); }
+.auth-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 24px 0; color: var(--text-muted); font-size: 13px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.auth-footer-note {
+  text-align: center; margin-top: 24px;
+  font-size: 13px; color: var(--text-muted);
+}
+.auth-footer-note a { color: var(--amber); }
+
+/* Spinner inside button */
+.btn-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(28,25,23,0.3);
+  border-top-color: #1C1917;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+.btn-spinner.visible { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { padding: 80px 24px 48px; min-height: 100vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- LEFT — Branding -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <a href="/" class="auth-brand">
+        <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+          <rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/>
+          <rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/>
+          <circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+          <circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+          <circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+          <rect x="19" y="14" width="5" height="4" rx="0.5" fill="#7DD3FC" opacity="0.8"/>
+        </svg>
+        CargoPath
+      </a>
+
+      <h1 class="auth-headline">
+        Protect Your Cargo.<br>
+        <span>Every Kilometre.</span>
+      </h1>
+      <p class="auth-sub">
+        Sign in to access damage-aware routing, profit analysis,
+        and AI-powered insights for your cargo shipments across India.
+      </p>
+
+      <div class="auth-truck-wrap">
+        <svg viewBox="0 0 440 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="220" cy="182" rx="185" ry="12" fill="#0a0905" opacity="0.45"/>
+          <rect x="20" y="55" width="240" height="108" rx="7" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+          <rect x="30" y="64" width="220" height="90" rx="4" fill="#292524"/>
+          <text x="140" y="116" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="800" fill="#F59E0B" text-anchor="middle" letter-spacing="2">CARGOPATH</text>
+          <text x="140" y="132" font-family="Barlow,sans-serif" font-size="8" fill="#78716C" text-anchor="middle" letter-spacing="4">SMART ROUTING</text>
+          <rect x="260" y="70" width="118" height="93" rx="7" fill="#292524" stroke="#57534E" stroke-width="1.2"/>
+          <path d="M260 70 Q275 50 315 46 L368 46 Q384 46 378 70 Z" fill="#44403C" stroke="#57534E" stroke-width="1.2"/>
+          <path d="M268 70 Q281 52 315 48 L366 48 Q377 48 372 70 Z" fill="#7DD3FC" opacity="0.2"/>
+          <rect x="266" y="78" width="36" height="30" rx="3" fill="#7DD3FC" opacity="0.15" stroke="#7DD3FC" stroke-width="0.8" opacity="0.35"/>
+          <rect x="266" y="114" width="100" height="42" rx="3" fill="#333028" stroke="#57534E" stroke-width="1"/>
+          <rect x="324" y="133" width="18" height="4" rx="2" fill="#F59E0B"/>
+          <rect x="366" y="78" width="30" height="16" rx="3" fill="#FEF3C7" opacity="0.85" stroke="#F59E0B" stroke-width="0.8"/>
+          <rect x="366" y="98" width="30" height="8" rx="2.5" fill="#F59E0B" class="blink"/>
+          <rect x="362" y="120" width="36" height="28" rx="2.5" fill="#1C1917" stroke="#57534E" stroke-width="1"/>
+          <line x1="362" y1="129" x2="398" y2="129" stroke="#44403C" stroke-width="0.8"/>
+          <line x1="362" y1="137" x2="398" y2="137" stroke="#44403C" stroke-width="0.8"/>
+          <line x1="362" y1="145" x2="398" y2="145" stroke="#44403C" stroke-width="0.8"/>
+          <rect x="357" y="148" width="44" height="10" rx="3" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <rect x="20" y="158" width="378" height="7" rx="3.5" fill="#1C1917" stroke="#44403C" stroke-width="0.8"/>
+          <!-- Wheels -->
+          <circle cx="65"  cy="168" r="18" fill="#111827" stroke="#44403C" stroke-width="1.5"/>
+          <circle cx="65"  cy="168" r="11" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <circle cx="65"  cy="168" r="4" fill="#F59E0B"/>
+          <circle cx="118" cy="168" r="18" fill="#111827" stroke="#44403C" stroke-width="1.5"/>
+          <circle cx="118" cy="168" r="11" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <circle cx="118" cy="168" r="4" fill="#F59E0B"/>
+          <circle cx="220" cy="168" r="18" fill="#111827" stroke="#44403C" stroke-width="1.5"/>
+          <circle cx="220" cy="168" r="11" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <circle cx="220" cy="168" r="4" fill="#F59E0B"/>
+          <circle cx="305" cy="168" r="18" fill="#111827" stroke="#44403C" stroke-width="1.5"/>
+          <circle cx="305" cy="168" r="11" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <circle cx="305" cy="168" r="4" fill="#F59E0B"/>
+          <circle cx="378" cy="168" r="18" fill="#111827" stroke="#44403C" stroke-width="1.5"/>
+          <circle cx="378" cy="168" r="11" fill="#1C1917" stroke="#57534E" stroke-width="1.2"/>
+          <circle cx="378" cy="168" r="4" fill="#F59E0B"/>
+          <!-- Tail lights -->
+          <rect x="20" y="82" width="8" height="15" rx="2.5" fill="#EF4444" opacity="0.85" class="tail-blink"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="auth-chips">
+      <div class="auth-chip">
+        <div class="auth-chip-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="auth-chip-text">
+          <strong>Secure & Private</strong>
+          Your routes and data are encrypted and stored safely.
+        </div>
+      </div>
+      <div class="auth-chip">
+        <div class="auth-chip-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+        <div class="auth-chip-text">
+          <strong>Personalised History</strong>
+          All your planned routes saved to your account.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — Form -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+
+      <div class="auth-form-header">
+        <h1>Welcome back</h1>
+        <p>Don't have an account? <a href="/signup">Sign up for free</a></p>
+      </div>
+
+      <!-- Error box -->
+      <div class="auth-error" id="authError">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="authErrorText">Something went wrong.</span>
+      </div>
+
+      <!-- Email -->
+      <div class="auth-field">
+        <label class="auth-label">Email Address</label>
+        <div class="auth-input-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input class="auth-input" type="email" id="email"
+                 placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="auth-field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label class="auth-label" style="margin-bottom:0">Password</label>
+        </div>
+        <div class="auth-input-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="auth-input" type="password" id="password"
+                 placeholder="Your password" autocomplete="current-password">
+          <button class="pw-toggle" type="button" onclick="togglePw('password',this)" aria-label="Toggle password">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button class="auth-submit" id="submitBtn" onclick="doSignIn()">
+        <div class="btn-spinner" id="spinner"></div>
+        <span id="btnText">Sign In</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="btnIcon"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-footer-note">
+        New to CargoPath? <a href="/signup">Create a free account →</a>
+      </div>
+      <div class="auth-footer-note" style="margin-top:12px">
+        <a href="/" style="color:var(--text-muted)">← Back to homepage</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
+function showError(msg) {
+  document.getElementById('authErrorText').textContent = msg;
+  document.getElementById('authError').classList.add('visible');
+}
+function hideError() {
+  document.getElementById('authError').classList.remove('visible');
+}
+
+function setLoading(on) {
+  document.getElementById('submitBtn').disabled = on;
+  document.getElementById('spinner').classList.toggle('visible', on);
+  document.getElementById('btnText').textContent = on ? 'Signing in…' : 'Sign In';
+  document.getElementById('btnIcon').style.display = on ? 'none' : '';
+}
+
+async function doSignIn() {
+  hideError();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (!email)    { showError('Please enter your email address.'); return; }
+  if (!password) { showError('Please enter your password.'); return; }
+
+  setLoading(true);
+  try {
+    const res  = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = '/route-planner';
+    } else {
+      showError(data.error || 'Sign in failed. Please try again.');
+    }
+  } catch (err) {
+    showError('Network error. Please check your connection.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Enter key submits
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignIn();
+});
+</script>
+</body>
+</html>

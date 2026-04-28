@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — CargoPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* ── Page Hero ── */
+.about-hero {
+  padding: 100px 24px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.about-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%,
+    rgba(245,158,11,0.10) 0%, transparent 70%);
+  pointer-events: none;
+}
+.about-hero .hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber-glow); border: 1px solid var(--border-amber);
+  border-radius: 99px; padding: 6px 16px;
+  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--amber); margin-bottom: 24px;
+}
+.about-hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(46px, 7vw, 80px);
+  font-weight: 800; line-height: 1.05;
+  color: var(--text-primary); margin-bottom: 20px;
+}
+.about-hero h1 span { color: var(--amber); }
+.about-hero p {
+  font-size: 17px; color: var(--text-secondary);
+  line-height: 1.75; max-width: 620px; margin: 0 auto;
+}
+
+/* ── Section common ── */
+.about-section {
+  padding: 72px 24px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.about-section + .about-section {
+  border-top: 1px solid var(--border);
+}
+.section-tag {
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--amber); font-weight: 600; margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 4vw, 48px); font-weight: 800;
+  color: var(--text-primary); margin-bottom: 16px;
+}
+.section-body {
+  font-size: 16px; color: var(--text-secondary);
+  line-height: 1.8; max-width: 680px;
+}
+
+/* ── How it works steps ── */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+.step-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  transition: border-color 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.step-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.step-card:hover { border-color: var(--border-amber); transform: translateY(-4px); }
+.step-card:hover::before { opacity: 1; }
+.step-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 48px; font-weight: 800;
+  color: var(--amber); opacity: 0.25;
+  line-height: 1; margin-bottom: 12px;
+}
+.step-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.step-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ── Algorithm two-column ── */
+.algo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 48px;
+  align-items: start;
+}
+.algo-text .section-body { margin-bottom: 24px; }
+.algo-detail-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.algo-detail-list li {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+}
+.algo-detail-list li::before {
+  content: '▸';
+  color: var(--amber); font-size: 12px; margin-top: 3px; flex-shrink: 0;
+}
+.algo-code-block {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  overflow-x: auto;
+}
+.algo-code-block .kw { color: var(--amber); font-weight: 700; }
+.algo-code-block .cm { color: var(--text-muted); }
+.algo-code-block .fn { color: #7DD3FC; }
+
+/* ── Cargo cards ── */
+.cargo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 40px;
+}
+.cargo-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.cargo-card:hover { border-color: var(--border-amber); transform: translateY(-3px); }
+.cargo-emoji { font-size: 32px; margin-bottom: 10px; }
+.cargo-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.cargo-card p { font-size: 12px; color: var(--text-muted); }
+.fragility-bar {
+  margin-top: 10px;
+  height: 4px; background: var(--bg-600);
+  border-radius: 2px; overflow: hidden;
+}
+.fragility-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+}
+
+/* ── Team / Tech stack ── */
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+.stack-item {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.stack-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  background: var(--amber-glow); border: 1px solid var(--border-amber);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--amber); flex-shrink: 0; font-size: 18px;
+}
+.stack-item h4 { font-size: 14px; font-weight: 600; }
+.stack-item p { font-size: 11px; color: var(--text-muted); }
+
+/* ── CTA banner ── */
+.about-cta {
+  background: linear-gradient(135deg, #1a1410 0%, var(--bg-800) 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 24px;
+  text-align: center;
+}
+.about-cta h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(36px, 5vw, 58px); font-weight: 800;
+  color: var(--text-primary); margin-bottom: 16px;
+}
+.about-cta h2 span { color: var(--amber); }
+.about-cta p { font-size: 16px; color: var(--text-secondary); margin-bottom: 36px; }
+.about-cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .algo-grid { grid-template-columns: 1fr; }
+  .about-section { padding: 52px 20px; }
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><rect x="19" y="14" width="5" height="4" rx="0.5" fill="#7DD3FC" opacity="0.8"/></svg>
+    CargoPath
+  </a>
+  <ul class="nav-links" id="navMenu">
+    <li><a href="/">Home</a></li>
+    <li><a href="/route-planner">Route Planner</a></li>
+    <li><a href="/history">Route History</a></li>
+    <li><a href="/about" class="active">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/profile" class="nav-profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Profile
+    </a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- Hero -->
+<section class="about-hero">
+  <div class="hero-badge"><span class="badge-dot"></span>About CargoPath</div>
+  <h1>Built for <span>Smarter</span><br>Logistics</h1>
+  <p>CargoPath is a damage-aware cargo routing platform that combines graph algorithms, road-roughness data, and Gemini AI to help transporters make better decisions — protecting fragile goods while maximising profit.</p>
+</section>
+
+<!-- How It Works -->
+<section class="about-section">
+  <div class="section-tag">How It Works</div>
+  <h2 class="section-title">Four Steps to a Smarter Route</h2>
+  <p class="section-body">Every route request goes through an intelligent pipeline that considers your cargo's fragility, road conditions across India, and financial outcomes — all in seconds.</p>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Select Cargo &amp; Cities</h3>
+      <p>Choose your origin, destination, and what you're transporting — crops or goods — along with quantity.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Damage-Aware Routing</h3>
+      <p>Our Modified Dijkstra algorithm weighs road roughness and cargo fragility together to find the safest path, not just the shortest.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Profit Analysis</h3>
+      <p>Every route comes with a full financial breakdown — revenue, transport cost, damage risk, and net profit in INR.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>AI Explanation</h3>
+      <p>Gemini AI explains exactly why the route suits your cargo, which segments carry risk, and how to drive to minimise damage.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Algorithm -->
+<section class="about-section">
+  <div class="algo-grid">
+    <div class="algo-text">
+      <div class="section-tag">The Algorithm</div>
+      <h2 class="section-title">Modified Dijkstra's Shortest Path</h2>
+      <p class="section-body">Standard shortest-path algorithms optimise for distance alone. CargoPath extends Dijkstra's with a composite cost function that fuses distance with road roughness and cargo fragility.</p>
+      <ul class="algo-detail-list">
+        <li>Edge weight = distance × (1 + fragility × roughness / 10) — fragile cargo penalises rough roads exponentially.</li>
+        <li>Top-3 alternative routes are computed so you can compare risk vs. distance vs. profit.</li>
+        <li>All 10 major Indian logistics hubs are modelled as graph nodes with real-world distances and roughness ratings.</li>
+        <li>Routes are stored in SQLite and re-usable for historical analysis and pattern discovery.</li>
+      </ul>
+    </div>
+    <div class="algo-code-block">
+<span class="cm"># Composite edge cost</span>
+<span class="kw">def</span> <span class="fn">edge_cost</span>(dist, roughness, fragility):
+    penalty = roughness * fragility / 10
+    <span class="kw">return</span> dist * (1 + penalty)
+
+<span class="cm"># Modified Dijkstra loop</span>
+<span class="kw">while</span> heap:
+    cost, node = heappop(heap)
+    <span class="kw">for</span> neighbour, d, r <span class="kw">in</span> graph[node]:
+        new_cost = cost + edge_cost(d, r, fragility)
+        <span class="kw">if</span> new_cost &lt; best[neighbour]:
+            best[neighbour] = new_cost
+            heappush(heap, (new_cost, neighbour))
+
+<span class="cm"># AI explanation via Gemini</span>
+explanation = gemini.generate(
+    prompt_with_route_details
+)
+    </div>
+  </div>
+</section>
+
+<!-- Cargo Types -->
+<section class="about-section">
+  <div class="section-tag">Cargo Types</div>
+  <h2 class="section-title">20+ Supported Cargo Types</h2>
+  <p class="section-body">From delicate tomatoes to robust steel, every cargo type has a calibrated fragility score that directly influences route selection.</p>
+  <div class="cargo-grid">
+    <div class="cargo-card">
+      <div class="cargo-emoji">🍅</div>
+      <h4>Tomatoes</h4>
+      <p>Fragility 9/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:90%"></div></div>
+    </div>
+    <div class="cargo-card">
+      <div class="cargo-emoji">🥛</div>
+      <h4>Dairy</h4>
+      <p>Fragility 8/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:80%"></div></div>
+    </div>
+    <div class="cargo-card">
+      <div class="cargo-emoji">💊</div>
+      <h4>Medicines</h4>
+      <p>Fragility 9/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:90%"></div></div>
+    </div>
+    <div class="cargo-card">
+      <div class="cargo-emoji">📱</div>
+      <h4>Electronics</h4>
+      <p>Fragility 8/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:80%"></div></div>
+    </div>
+    <div class="cargo-card">
+      <div class="cargo-emoji">🌾</div>
+      <h4>Wheat</h4>
+      <p>Fragility 2/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:20%"></div></div>
+    </div>
+    <div class="cargo-card">
+      <div class="cargo-emoji">⚙️</div>
+      <h4>Machinery</h4>
+      <p>Fragility 3/10</p>
+      <div class="fragility-bar"><div class="fragility-fill" style="width:30%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="about-section">
+  <div class="section-tag">Technology</div>
+  <h2 class="section-title">Built With Modern Tools</h2>
+  <p class="section-body">CargoPath is powered by an efficient, lightweight stack designed for reliability and speed.</p>
+  <div class="stack-grid">
+    <div class="stack-item">
+      <div class="stack-icon">🐍</div>
+      <div><h4>Python &amp; Flask</h4><p>Backend &amp; API</p></div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-icon">🧮</div>
+      <div><h4>Modified Dijkstra</h4><p>Core algorithm</p></div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-icon">✨</div>
+      <div><h4>Gemini AI</h4><p>Route explanation</p></div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-icon">🗄️</div>
+      <div><h4>SQLite</h4><p>Route history</p></div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-icon">🎨</div>
+      <div><h4>Vanilla CSS</h4><p>Dark UI theme</p></div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-icon">📊</div>
+      <div><h4>Profit Engine</h4><p>Financial analysis</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="about-cta">
+  <h2>Ready to Route <span>Smarter?</span></h2>
+  <p>Plan your first damage-aware route in under 30 seconds.</p>
+  <div class="about-cta-btns">
+    <a href="/route-planner" class="btn-primary">Plan a Route</a>
+    <a href="/contact" class="btn-ghost">Get in Touch</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:12px">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/></svg>
+        CargoPath
+      </a>
+      <p>Damage-aware cargo routing powered by Modified Dijkstra &amp; Gemini AI.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Navigation</h4>
+      <a href="/route-planner">Route Planner</a>
+      <a href="/history">Route History</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="/profile">Profile</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 CargoPath. Built with Flask + Modified Dijkstra + Gemini AI.</p></div>
+</footer>
+<script>
+document.getElementById('navToggle').addEventListener('click', () =>
+  document.getElementById('navMenu').classList.toggle('open'));
+</script>
+</body>
+</html>

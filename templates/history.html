@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Route History — CargoPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* ── HISTORY PAGE STYLES ─── */
+
+/* Stats bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.stat-tile {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.stat-tile:hover { border-color: var(--border-amber); }
+.stat-tile-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Controls bar */
+.controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.search-box {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px 10px 40px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-box input:focus { border-color: var(--amber); }
+.search-box svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--border-amber); color: var(--text-primary); }
+.chip.active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+
+/* Sort select */
+.sort-select {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  padding: 9px 14px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+.sort-select:focus { border-color: var(--amber); }
+.sort-select option { background: var(--bg-700); }
+
+/* History table */
+.history-table-wrap {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.history-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 14px 20px;
+  background: var(--bg-700);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+.history-table th:hover { color: var(--amber); }
+.sort-icon { margin-left: 4px; opacity: 0.5; }
+.sort-icon.active { opacity: 1; color: var(--amber); }
+.history-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(87,83,78,0.25);
+  vertical-align: middle;
+}
+.history-table tr:last-child td { border-bottom: none; }
+.history-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.history-table tbody tr:hover td { background: rgba(245,158,11,0.04); }
+
+/* Table cell types */
+.route-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.route-main {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.route-codes {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.cargo-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cargo-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+.frag-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.frag-mini-track {
+  width: 50px;
+  height: 4px;
+  background: var(--bg-600);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.frag-mini-fill { height: 100%; border-radius: 2px; }
+.frag-label { font-size: 11px; color: var(--text-muted); }
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.tag-crop    { background: rgba(134,239,172,0.12); color: #86EFAC; border: 1px solid rgba(134,239,172,0.25); }
+.tag-goods   { background: rgba(125,211,252,0.12); color: #7DD3FC; border: 1px solid rgba(125,211,252,0.25); }
+.tag-profit  { background: rgba(134,239,172,0.12); color: #86EFAC; border: 1px solid rgba(134,239,172,0.25); }
+.tag-loss    { background: rgba(252,165,165,0.12); color: #FCA5A5; border: 1px solid rgba(252,165,165,0.25); }
+
+.num-cell {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.date-cell { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+.action-cell { display: flex; gap: 8px; }
+.row-btn {
+  width: 32px; height: 32px;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.row-btn:hover { color: var(--amber); border-color: var(--border-amber); }
+.row-btn.danger:hover { color: var(--red); border-color: rgba(252,165,165,0.4); }
+
+/* Empty + loading */
+.hist-empty {
+  text-align: center;
+  padding: 80px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.hist-empty-icon {
+  width: 72px; height: 72px;
+  background: var(--bg-700);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.hist-empty h3 { font-size: 22px; color: var(--text-secondary); }
+.hist-empty p { font-size: 14px; color: var(--text-muted); max-width: 300px; line-height: 1.6; }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-700);
+}
+.pagination-info { font-size: 13px; color: var(--text-muted); }
+.pagination-btns { display: flex; gap: 6px; }
+.page-btn {
+  width: 34px; height: 34px;
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.page-btn:hover { border-color: var(--border-amber); color: var(--amber); }
+.page-btn.active { background: var(--amber); color: #1C1917; border-color: var(--amber); font-weight: 700; }
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Detail Modal */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; visibility: hidden;
+  transition: all 0.25s;
+}
+.modal-backdrop.open { opacity: 1; visibility: visible; }
+.modal {
+  background: var(--bg-800);
+  border: 1px solid var(--border-amber);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(20px);
+  transition: transform 0.25s;
+}
+.modal-backdrop.open .modal { transform: translateY(0); }
+.modal-header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--bg-800);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  z-index: 1;
+}
+/* .modal-title-area is a structural wrapper — no additional styles needed */
+.modal-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+}
+.modal-close {
+  width: 36px; height: 36px;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.modal-close:hover { color: var(--text-primary); border-color: var(--bg-300); }
+.modal-body { padding: 24px 28px 28px; }
+.modal-section { margin-bottom: 24px; }
+.modal-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.modal-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.modal-stop {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.modal-arrow { color: var(--text-muted); font-size: 16px; }
+.modal-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.modal-metric {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.modal-metric-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.modal-metric-value { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; }
+.modal-finance {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.mf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(87,83,78,0.25);
+  font-size: 14px;
+}
+.mf-row:last-child { border-bottom: none; background: rgba(245,158,11,0.06); }
+.mf-label { color: var(--text-secondary); }
+.mf-value { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; }
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Chart area */
+.chart-container {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.chart-header h3 { font-size: 18px; font-weight: 700; }
+.chart-legend { display: flex; gap: 16px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.mini-bar-chart { display: flex; gap: 8px; align-items: flex-end; height: 100px; }
+.bar-group { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.bar-wrap { display: flex; gap: 3px; align-items: flex-end; height: 80px; }
+.bar {
+  width: 20px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.5s ease;
+  cursor: pointer;
+  position: relative;
+}
+.bar:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-600);
+  color: var(--text-primary);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+.bar-label { font-size: 10px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+
+/* Responsive */
+@media(max-width:900px){
+  .stats-bar { grid-template-columns: repeat(3,1fr); }
+  .modal-metrics { grid-template-columns: 1fr 1fr; }
+  .history-table th:nth-child(5),
+  .history-table td:nth-child(5),
+  .history-table th:nth-child(6),
+  .history-table td:nth-child(6) { display:none; }
+}
+@media(max-width:600px){
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .controls-bar { flex-direction: column; align-items: stretch; }
+  .history-table th:nth-child(3),
+  .history-table td:nth-child(3),
+  .history-table th:nth-child(4),
+  .history-table td:nth-child(4) { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/>
+      <rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/>
+      <circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <rect x="19" y="14" width="5" height="4" rx="0.5" fill="#7DD3FC" opacity="0.8"/>
+    </svg>
+    CargoPath
+  </a>
+  <ul class="nav-links" id="navMenu">
+    <li><a href="/">Home</a></li>
+    <li><a href="/route-planner">Route Planner</a></li>
+    <li><a href="/history" class="active">Route History</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/profile" class="nav-profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profile
+    </a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="container" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div>
+      <div class="breadcrumb"><a href="/">Home</a> <span>›</span> Route History</div>
+      <h1>Route History</h1>
+      <p>All your saved cargo routes, profit breakdowns, and trip analytics.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-secondary" onclick="exportCSV()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <button class="btn-secondary" onclick="clearAll()" style="color:var(--red);border-color:rgba(252,165,165,0.3)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Clear All
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="container" style="padding-top:40px;padding-bottom:80px">
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-tile">
+      <div class="stat-tile-value" id="statTotal" style="color:var(--amber)">0</div>
+      <div class="stat-tile-label">Total Routes</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value" id="statDistance" style="color:var(--blue)">0 km</div>
+      <div class="stat-tile-label">Total Distance</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value" id="statProfit" style="color:var(--green)">₹0</div>
+      <div class="stat-tile-label">Total Profit</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value" id="statProfitable" style="color:var(--green)">0</div>
+      <div class="stat-tile-label">Profitable Trips</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-tile-value" id="statTopCargo" style="color:var(--purple)">—</div>
+      <div class="stat-tile-label">Most Shipped</div>
+    </div>
+  </div>
+
+  <!-- CHART (shown when ≥3 entries) -->
+  <div class="chart-container" id="chartArea" style="display:none">
+    <div class="chart-header">
+      <h3>Profit by Route</h3>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Profitable</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Loss</div>
+      </div>
+    </div>
+    <div class="mini-bar-chart" id="profitChart"></div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by city, cargo, route…" oninput="applyFilters()">
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">All</button>
+      <button class="chip" data-filter="crop" onclick="setFilter(this,'crop')">Crops</button>
+      <button class="chip" data-filter="goods" onclick="setFilter(this,'goods')">Goods</button>
+      <button class="chip" data-filter="profit" onclick="setFilter(this,'profit')">Profitable</button>
+      <button class="chip" data-filter="loss" onclick="setFilter(this,'loss')">Loss</button>
+    </div>
+    <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+      <option value="date-desc">Newest First</option>
+      <option value="date-asc">Oldest First</option>
+      <option value="profit-desc">Highest Profit</option>
+      <option value="profit-asc">Lowest Profit</option>
+      <option value="dist-desc">Longest Route</option>
+      <option value="dist-asc">Shortest Route</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="history-table-wrap" id="historyWrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('route')">Route <span class="sort-icon" id="si-route">↕</span></th>
+          <th onclick="sortBy('cargo')">Cargo <span class="sort-icon" id="si-cargo">↕</span></th>
+          <th onclick="sortBy('dist')">Distance <span class="sort-icon" id="si-dist">↕</span></th>
+          <th onclick="sortBy('net')">Net Profit <span class="sort-icon" id="si-net">↕</span></th>
+          <th onclick="sortBy('units')">Units <span class="sort-icon" id="si-units">↕</span></th>
+          <th onclick="sortBy('date')">Date <span class="sort-icon" id="si-date">↕</span></th>
+          <th style="cursor:default">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="histTableBody"></tbody>
+    </table>
+    <!-- Empty state inside table -->
+    <div class="hist-empty" id="histEmpty" style="display:none">
+      <div class="hist-empty-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+      </div>
+      <h3>No Routes Found</h3>
+      <p id="emptyMsg">You haven't saved any routes yet. Plan and save a route from the Route Planner.</p>
+      <a href="/route-planner" class="btn-primary" style="margin-top:4px">Plan a Route</a>
+    </div>
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none">
+      <div class="pagination-info" id="pageInfo"></div>
+      <div class="pagination-btns" id="pageBtns"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-area">
+        <div class="modal-tag" id="mTag">—</div>
+        <div class="modal-title" id="mTitle">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Path -->
+      <div class="modal-section">
+        <div class="modal-section-title">Route Path</div>
+        <div class="modal-path" id="mPath"></div>
+      </div>
+      <!-- Metrics -->
+      <div class="modal-section">
+        <div class="modal-section-title">Key Metrics</div>
+        <div class="modal-metrics" id="mMetrics"></div>
+      </div>
+      <!-- Finance -->
+      <div class="modal-section">
+        <div class="modal-section-title">Financial Breakdown</div>
+        <div class="modal-finance" id="mFinance"></div>
+      </div>
+      <!-- Actions -->
+      <div class="modal-actions">
+        <a href="/route-planner" class="btn-primary" id="mReplan" style="flex:1;justify-content:center">Re-plan This Route</a>
+        <button class="btn-secondary" onclick="closeModalDirect()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:12px">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/></svg>
+        CargoPath
+      </a>
+      <p>Damage-aware cargo routing powered by Modified Dijkstra & Gemini AI.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Navigation</h4>
+      <a href="/route-planner">Route Planner</a>
+      <a href="/history">Route History</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 CargoPath. Built with Flask + Modified Dijkstra + Gemini AI.</p></div>
+</footer>
+
+<script>
+// ── CONSTANTS ───────────────────────────────────────────────
+const NODE_NAMES={DEL:'Delhi',MUM:'Mumbai',BLR:'Bangalore',HYD:'Hyderabad',CHE:'Chennai',KOL:'Kolkata',VIZ:'Vizag',AMD:'Ahmedabad',PUN:'Pune',LUC:'Lucknow'};
+const CROPS=['tomato','potato','onion','mango','grapes','wheat','rice','banana','apple','strawberry','cabbage','cauliflower','sugarcane','cotton'];
+const FUEL=8,DRIVER=2.5,DAMAGE_FACTOR=5;
+
+// ── STATE ───────────────────────────────────────────────────
+let allData=[];
+let filtered=[];
+let currentFilter='all';
+let currentSort='date-desc';
+let currentPage=1;
+const PAGE_SIZE=8;
+let activeSort=null;
+let sortDir=1;
+
+// ── NORMALISE: map DB row fields → UI fields ─────────────────
+function normaliseRow(r){
+  // path_codes comes back as a parsed array from the API
+  const pathArr = Array.isArray(r.path_codes) ? r.path_codes : [];
+  return {
+    id:        r.id,
+    date:      r.searched_at ? r.searched_at.split('T')[0] : '—',
+    from:      r.start_code,
+    to:        r.dest_code,
+    fromName:  r.start_name,
+    toName:    r.dest_name,
+    cargo:     r.cargo_name,
+    fragility: r.fragility,
+    units:     r.units,
+    distance:  r.total_distance_km,
+    cost:      r.total_weighted_cost,
+    net:       r.net_profit_inr,
+    profit:    r.profitable === 1 || r.profitable === true,
+    path:      pathArr.join(' → '),
+  };
+}
+
+// ── LOAD DATA from /api/history ──────────────────────────────
+async function loadData(){
+  try {
+    const res  = await fetch('/api/history?limit=200');
+    const json = await res.json();
+    if(json.success){
+      allData = json.routes.map(normaliseRow);
+    } else {
+      showToast('Could not load history from server.','✗');
+      allData = [];
+    }
+  } catch(err){
+    showToast('Server unreachable — showing empty history.','⚠');
+    allData = [];
+  }
+}
+
+// ── LOAD STATS from /api/history/stats ───────────────────────
+async function loadStats(){
+  try {
+    const res  = await fetch('/api/history/stats');
+    const json = await res.json();
+    if(json.success){
+      const s=json.stats;
+      document.getElementById('statTotal').textContent    = s.total_routes;
+      document.getElementById('statDistance').textContent = Math.round(s.total_distance_km).toLocaleString()+' km';
+      const pEl=document.getElementById('statProfit');
+      pEl.textContent=(s.total_net_profit<0?'−':'')+'₹'+Math.abs(Math.round(s.total_net_profit)).toLocaleString();
+      pEl.style.color=s.total_net_profit>=0?'var(--green)':'var(--red)';
+      document.getElementById('statProfitable').textContent = s.profitable_count;
+      document.getElementById('statTopCargo').textContent   =
+        s.top_cargo?.cargo_name
+          ? s.top_cargo.cargo_name.charAt(0).toUpperCase()+s.top_cargo.cargo_name.slice(1)
+          : '—';
+    }
+  } catch(_){}
+}
+
+// No-op — data now lives in SQLite, not localStorage
+function saveData(){}
+
+// ── STATS ───────────────────────────────────────────────────
+function renderStats(){
+  const total=allData.length;
+  const totalDist=allData.reduce((s,r)=>s+r.distance,0);
+  const totalProfit=allData.reduce((s,r)=>s+r.net,0);
+  const profitable=allData.filter(r=>r.profit).length;
+  const cargoCounts={};
+  allData.forEach(r=>cargoCounts[r.cargo]=(cargoCounts[r.cargo]||0)+1);
+  const topCargo=Object.entries(cargoCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statDistance').textContent=totalDist.toLocaleString()+' km';
+  const pEl=document.getElementById('statProfit');
+  pEl.textContent=(totalProfit<0?'−':'')+'₹'+Math.abs(totalProfit).toLocaleString();
+  pEl.style.color=totalProfit>=0?'var(--green)':'var(--red)';
+  document.getElementById('statProfitable').textContent=profitable;
+  document.getElementById('statTopCargo').textContent=topCargo?topCargo[0].charAt(0).toUpperCase()+topCargo[0].slice(1):'—';
+}
+
+// ── CHART ───────────────────────────────────────────────────
+function renderChart(){
+  const recent=allData.slice(0,8);
+  if(recent.length<3){document.getElementById('chartArea').style.display='none';return;}
+  document.getElementById('chartArea').style.display='block';
+  const maxAbs=Math.max(...recent.map(r=>Math.abs(r.net)),1);
+  const chart=document.getElementById('profitChart');
+  chart.innerHTML='';
+  recent.forEach(r=>{
+    const h=Math.round((Math.abs(r.net)/maxAbs)*76);
+    const col=r.profit?'var(--green)':'var(--red)';
+    const label=r.from+'→'+r.to;
+    const bg=document.createElement('div');
+    bg.className='bar-group';
+    bg.innerHTML=`<div class="bar-wrap"><div class="bar" style="height:${h}px;background:${col};opacity:0.85" data-tip="${(r.profit?'+':'−')}₹${Math.abs(r.net).toLocaleString()}"></div></div><div class="bar-label">${label}</div>`;
+    chart.appendChild(bg);
+  });
+}
+
+// ── FILTERS & SORT ──────────────────────────────────────────
+function setFilter(el,filter){
+  currentFilter=filter;
+  currentPage=1;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===filter));
+  applyFilters();
+}
+
+function sortBy(key){
+  if(activeSort===key) sortDir*=-1;
+  else {activeSort=key;sortDir=1;}
+  document.querySelectorAll('[id^="si-"]').forEach(el=>el.textContent='↕');
+  const icons={route:'si-route',cargo:'si-cargo',dist:'si-dist',net:'si-net',units:'si-units',date:'si-date'};
+  if(icons[key]){
+    const el=document.getElementById(icons[key]);
+    el.textContent=sortDir===1?'↑':'↓';
+    el.classList.add('active');
+  }
+  applyFilters();
+}
+
+function applyFilters(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const sort=document.getElementById('sortSelect').value;
+
+  filtered=allData.filter(r=>{
+    const matchFilter=currentFilter==='all'||
+      (currentFilter==='crop'&&CROPS.includes(r.cargo))||
+      (currentFilter==='goods'&&!CROPS.includes(r.cargo))||
+      (currentFilter==='profit'&&r.profit)||
+      (currentFilter==='loss'&&!r.profit);
+    const matchSearch=!q||
+      r.from.toLowerCase().includes(q)||r.to.toLowerCase().includes(q)||
+      r.fromName.toLowerCase().includes(q)||r.toName.toLowerCase().includes(q)||
+      r.cargo.toLowerCase().includes(q)||r.path.toLowerCase().includes(q);
+    return matchFilter&&matchSearch;
+  });
+
+  // Sort
+  const sortMap={
+    'date-desc':(a,b)=>b.id-a.id,
+    'date-asc':(a,b)=>a.id-b.id,
+    'profit-desc':(a,b)=>b.net-a.net,
+    'profit-asc':(a,b)=>a.net-b.net,
+    'dist-desc':(a,b)=>b.distance-a.distance,
+    'dist-asc':(a,b)=>a.distance-b.distance,
+  };
+  if(activeSort){
+    const keyFn={route:r=>r.from+r.to,cargo:r=>r.cargo,dist:r=>r.distance,net:r=>r.net,units:r=>r.units,date:r=>r.id};
+    filtered.sort((a,b)=>(keyFn[activeSort](a)-keyFn[activeSort](b))*sortDir||
+      (typeof keyFn[activeSort](a)==='string'?keyFn[activeSort](a).localeCompare(keyFn[activeSort](b)):0)*sortDir);
+  } else {
+    filtered.sort(sortMap[sort]||sortMap['date-desc']);
+  }
+
+  currentPage=1;
+  renderTable();
+}
+
+// ── RENDER TABLE ────────────────────────────────────────────
+function renderTable(){
+  const tbody=document.getElementById('histTableBody');
+  const empty=document.getElementById('histEmpty');
+  const pag=document.getElementById('pagination');
+  tbody.innerHTML='';
+
+  if(filtered.length===0){
+    empty.style.display='flex';
+    pag.style.display='none';
+    if(document.getElementById('searchInput').value||currentFilter!=='all'){
+      document.getElementById('emptyMsg').textContent='No routes match your current filters. Try adjusting the search or filter chips.';
+    } else {
+      document.getElementById('emptyMsg').textContent='You haven\'t saved any routes yet. Plan and save a route from the Route Planner.';
+    }
+    return;
+  }
+
+  empty.style.display='none';
+  const start=(currentPage-1)*PAGE_SIZE;
+  const pageItems=filtered.slice(start,start+PAGE_SIZE);
+
+  pageItems.forEach(r=>{
+    const isCrop=CROPS.includes(r.cargo);
+    const fColor=r.fragility>=8?'var(--red)':r.fragility>=5?'#FBBF24':'var(--green)';
+    const profitColor=r.profit?'var(--green)':'var(--red)';
+    const tr=document.createElement('tr');
+    tr.onclick=()=>openModal(r);
+    tr.innerHTML=`
+      <td><div class="route-cell">
+        <div class="route-main">${r.fromName} <span style="color:var(--text-muted);font-size:14px">→</span> ${r.toName}</div>
+        <div class="route-codes">${r.from} → ${r.to}</div>
+      </div></td>
+      <td><div class="cargo-cell">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="cargo-name">${r.cargo}</span>
+          <span class="tag-pill ${isCrop?'tag-crop':'tag-goods'}">${isCrop?'Crop':'Goods'}</span>
+        </div>
+        <div class="frag-bar-wrap">
+          <div class="frag-mini-track"><div class="frag-mini-fill" style="width:${r.fragility*10}%;background:${fColor}"></div></div>
+          <span class="frag-label">Fragility ${r.fragility}/10</span>
+        </div>
+      </div></td>
+      <td><span class="num-cell" style="color:var(--blue)">${r.distance.toLocaleString()} km</span></td>
+      <td>
+        <div class="num-cell" style="color:${profitColor}">${r.profit?'+':'−'}₹${Math.abs(r.net).toLocaleString()}</div>
+        <span class="tag-pill ${r.profit?'tag-profit':'tag-loss'}" style="margin-top:4px">${r.profit?'Profitable':'Loss'}</span>
+      </td>
+      <td><span class="num-cell" style="color:var(--text-secondary)">${r.units}</span></td>
+      <td><span class="date-cell">${r.date}</span></td>
+      <td><div class="action-cell" onclick="event.stopPropagation()">
+        <button class="row-btn" onclick="openModal(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="View details">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+        <button class="row-btn" onclick='replan(${JSON.stringify({from:r.from,to:r.to,cargo:r.cargo}).replace(/"/g,"&quot;")})' title="Re-plan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+        </button>
+        <button class="row-btn danger" onclick="deleteRoute(${r.id},event)" title="Delete">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+
+  renderPagination();
+}
+
+function renderPagination(){
+  const pag=document.getElementById('pagination');
+  const info=document.getElementById('pageInfo');
+  const btns=document.getElementById('pageBtns');
+  const total=filtered.length;
+  const pages=Math.ceil(total/PAGE_SIZE);
+
+  if(pages<=1){pag.style.display='none';return;}
+  pag.style.display='flex';
+
+  const start=(currentPage-1)*PAGE_SIZE+1;
+  const end=Math.min(currentPage*PAGE_SIZE,total);
+  info.textContent=`Showing ${start}–${end} of ${total} routes`;
+
+  btns.innerHTML='';
+  const prev=document.createElement('button');
+  prev.className='page-btn';prev.textContent='←';prev.disabled=currentPage===1;
+  prev.onclick=()=>{if(currentPage>1){currentPage--;renderTable();}};
+  btns.appendChild(prev);
+
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&i>2&&i<pages-1&&Math.abs(i-currentPage)>1){
+      if(i===3||i===pages-2){const d=document.createElement('span');d.textContent='…';d.style.cssText='padding:0 6px;color:var(--text-muted);align-self:center';btns.appendChild(d);}
+      continue;
+    }
+    const b=document.createElement('button');
+    b.className='page-btn'+(i===currentPage?' active':'');
+    b.textContent=i;
+    b.onclick=((pg)=>()=>{currentPage=pg;renderTable();})(i);
+    btns.appendChild(b);
+  }
+
+  const next=document.createElement('button');
+  next.className='page-btn';next.textContent='→';next.disabled=currentPage===pages;
+  next.onclick=()=>{if(currentPage<pages){currentPage++;renderTable();}};
+  btns.appendChild(next);
+}
+
+// ── MODAL ───────────────────────────────────────────────────
+const HANDLING={electronics:120,furniture:50,glassware:150,textiles:20,machinery:40,pharmaceuticals:100,tomato:130,potato:25,onion:30,mango:110,grapes:180,wheat:10,rice:15,banana:90,apple:80,strawberry:200,cabbage:20,cauliflower:55,sugarcane:15,cotton:10};
+const PROFIT_PER_KM={electronics:35,furniture:12,glassware:20,textiles:8,machinery:25,pharmaceuticals:50,tomato:18,potato:7,onion:9,mango:30,grapes:40,wheat:5,rice:6,banana:22,apple:28,strawberry:45,cabbage:8,cauliflower:14,sugarcane:6,cotton:10};
+
+function openModal(r){
+  if(typeof r === 'string') r=JSON.parse(r);
+  const isCrop=CROPS.includes(r.cargo);
+
+  document.getElementById('mTag').textContent=r.cargo.toUpperCase()+' — Fragility '+r.fragility+'/10 — '+r.date;
+  document.getElementById('mTitle').textContent=r.fromName+' → '+r.toName;
+
+  // Path
+  const stops=r.path.split('→');
+  document.getElementById('mPath').innerHTML=stops.map((s,i)=>
+    (i>0?'<span class="modal-arrow">→</span>':'')+
+    `<div class="modal-stop">${s}<br><span style="font-size:11px;font-weight:400;color:var(--text-muted)">${NODE_NAMES[s]||s}</span></div>`
+  ).join('');
+
+  // Metrics
+  const fColor=r.fragility>=8?'var(--red)':r.fragility>=5?'#FBBF24':'var(--green)';
+  document.getElementById('mMetrics').innerHTML=`
+    <div class="modal-metric"><div class="modal-metric-label">Distance</div><div class="modal-metric-value" style="color:var(--blue)">${r.distance.toLocaleString()} km</div></div>
+    <div class="modal-metric"><div class="modal-metric-label">Fragility</div><div class="modal-metric-value" style="color:${fColor}">${r.fragility}/10</div></div>
+    <div class="modal-metric"><div class="modal-metric-label">Units</div><div class="modal-metric-value" style="color:var(--amber)">${r.units}</div></div>
+  `;
+
+  // Finance — derive costs from stored distance, fragility, units
+  const ppk=PROFIT_PER_KM[r.cargo]||10;
+  const hc=HANDLING[r.cargo]||50;
+  const revenue=Math.round(ppk*r.distance*r.units);
+  const fuel=Math.round(FUEL*r.distance);
+  const driver=Math.round(DRIVER*r.distance);
+  const handling=Math.round(hc*r.units);
+  // Damage loss: estimated roughness = total_cost - distance (weighted cost - raw distance)
+  // Use stored net profit to back-derive: total_cost = revenue - net
+  const totalCost=revenue-r.net;
+  const damage=Math.max(0, Math.round(totalCost - fuel - driver - handling));
+  document.getElementById('mFinance').innerHTML=`
+    <div class="mf-row"><span class="mf-label">Revenue</span><span class="mf-value" style="color:var(--green)">+₹${revenue.toLocaleString()}</span></div>
+    <div class="mf-row"><span class="mf-label">Fuel Cost</span><span class="mf-value" style="color:var(--red)">−₹${fuel.toLocaleString()}</span></div>
+    <div class="mf-row"><span class="mf-label">Driver Cost</span><span class="mf-value" style="color:#FBBF24">−₹${driver.toLocaleString()}</span></div>
+    <div class="mf-row"><span class="mf-label">Handling Cost</span><span class="mf-value" style="color:var(--purple)">−₹${handling.toLocaleString()}</span></div>
+    <div class="mf-row"><span class="mf-label">Damage Loss</span><span class="mf-value" style="color:#F97316">−₹${damage.toLocaleString()}</span></div>
+    <div class="mf-row"><span class="mf-label">Net Profit</span><span class="mf-value" style="color:${r.profit?'var(--green)':'var(--red)'}">${r.profit?'+':'−'}₹${Math.abs(r.net).toLocaleString()}</span></div>
+  `;
+
+  document.getElementById('mReplan').href=`/route-planner?from=${r.from}&to=${r.to}`;
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modalBackdrop'))closeModalDirect();
+}
+function closeModalDirect(){
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect();});
+
+// ── ACTIONS ─────────────────────────────────────────────────
+async function deleteRoute(id,e){
+  if(e)e.stopPropagation();
+  if(!confirm('Delete this route from history?'))return;
+  try{
+    const res=await fetch(`/api/history/${id}`,{method:'DELETE'});
+    const data=await res.json();
+    if(!data.success){showToast(data.error||'Delete failed.','✗');return;}
+    allData=allData.filter(r=>r.id!==id);
+    await loadStats();
+    renderChart();
+    applyFilters();
+    showToast('Route deleted.','✓');
+  }catch(err){
+    showToast('Network error — could not delete.','✗');
+  }
+}
+
+function replan({from,to}){
+  window.location.href=`/route-planner?from=${from}&to=${to}`;
+}
+
+async function clearAll(){
+  if(!confirm('Clear ALL route history? This cannot be undone.'))return;
+  try{
+    const ids=[...allData.map(r=>r.id)];
+    await Promise.all(ids.map(id=>fetch(`/api/history/${id}`,{method:'DELETE'})));
+    allData=[];
+    await loadStats();
+    renderChart();
+    applyFilters();
+    showToast('All history cleared.','✓');
+  }catch(err){
+    showToast('Network error — could not clear history.','✗');
+  }
+}
+
+function exportCSV(){
+  if(allData.length===0){showToast('No data to export.','⚠');return;}
+  const cols=['Date','From','To','Cargo','Fragility','Units','Distance (km)','Net Profit (₹)','Profitable','Path'];
+  const rows=allData.map(r=>[r.date,r.fromName,r.toName,r.cargo,r.fragility,r.units,r.distance,r.net,r.profit?'Yes':'No',r.path]);
+  const csv=[cols,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='cargopath_history.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported as CSV!','✓');
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg,icon='ℹ'){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span style="font-size:16px">${icon}</span> ${msg}`;
+  t.style.display='flex';
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>{t.classList.add('fade-out');setTimeout(()=>{t.style.display='none';t.classList.remove('fade-out');},300);},3000);
+}
+
+// ── NAV ─────────────────────────────────────────────────────
+document.getElementById('navToggle').addEventListener('click',()=>{
+  document.getElementById('navMenu').classList.toggle('open');
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async ()=>{
+  await loadData();   // wait for DB rows to arrive FIRST
+  await loadStats();  // then fill stat tiles from DB
+  renderChart();      // then build chart
+  applyFilters();     // then render the table
+});
+</script>
+</body>
+</html>

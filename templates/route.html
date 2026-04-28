@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Route Planner — CargoPath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* ── PAGE-SPECIFIC STYLES ─── */
+.planner-layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 32px;
+  padding: 40px 0 80px;
+  align-items: start;
+}
+
+/* LEFT PANEL */
+.planner-panel {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: sticky;
+  top: 88px;
+}
+.panel-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.panel-tab {
+  padding: 16px;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.panel-tab.active {
+  color: var(--amber);
+  background: var(--amber-glow);
+  border-bottom-color: var(--amber);
+}
+.panel-body { padding: 28px; }
+
+.panel-section { display: none; }
+.panel-section.active { display: block; }
+
+/* Form elements */
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.field-input {
+  width: 100%;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  padding: 12px 16px;
+  appearance: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 20px;
+}
+.field-input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-glow);
+}
+.field-input option { background: var(--bg-700); }
+
+.city-swap-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.city-swap-row .city-field { flex: 1; margin-bottom: 0; }
+.city-swap-row .city-field .field-input { margin-bottom: 0; }
+.swap-btn {
+  width: 42px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--bg-600);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-bottom: 0;
+}
+.swap-btn:hover { color: var(--amber); border-color: var(--border-amber); }
+
+.cargo-type-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.cargo-type-btn {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-700);
+  color: var(--text-secondary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.cargo-type-btn.active {
+  border-color: var(--amber);
+  background: var(--amber-glow);
+  color: var(--amber);
+}
+.cargo-type-btn svg { flex-shrink: 0; }
+
+.crop-follow-up {
+  display: none;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid var(--border-amber);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 20px;
+}
+.crop-follow-up.visible { display: block; }
+.crop-follow-up .follow-label {
+  font-size: 12px;
+  color: var(--amber);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fragility-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.fragility-meter-label { font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+.fragility-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-600);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fragility-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease, background 0.4s ease;
+  width: 0%;
+}
+.fragility-score {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
+.units-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.units-row label { font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+.units-row input[type="number"] {
+  width: 80px;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 12px;
+  text-align: center;
+  outline: none;
+}
+.units-row input[type="number"]:focus { border-color: var(--amber); }
+.unit-btn {
+  width: 34px; height: 34px;
+  background: var(--bg-600);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.unit-btn:hover { background: var(--bg-500); }
+
+.submit-btn {
+  width: 100%;
+  background: var(--amber);
+  color: #1C1917;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 15px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.submit-btn:hover { background: var(--amber-light); transform: translateY(-1px); }
+.submit-btn:active { transform: translateY(0); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Cargo info card */
+.cargo-info-card {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 20px;
+  display: none;
+}
+.cargo-info-card.visible { display: block; }
+.cargo-info-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+.cargo-info-note { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+/* RIGHT PANEL — Results */
+.result-area {
+  min-height: 400px;
+}
+.empty-state {
+  background: var(--bg-800);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 80px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.empty-icon {
+  width: 64px; height: 64px;
+  background: var(--bg-700);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.empty-state h3 { font-size: 22px; font-weight: 700; color: var(--text-secondary); }
+.empty-state p { font-size: 14px; color: var(--text-muted); max-width: 300px; line-height: 1.6; }
+
+.loading-overlay {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 80px 40px;
+  text-align: center;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.loading-overlay.visible { display: flex; }
+.spinner-ring {
+  width: 48px; height: 48px;
+  border: 3px solid var(--bg-600);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay h3 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.loading-overlay p { font-size: 14px; color: var(--text-muted); }
+
+/* Result sections */
+.result-block {
+  display: none;
+  animation: fadeUp 0.4s ease;
+}
+.result-block.visible { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+.result-header {
+  background: var(--bg-800);
+  border: 1px solid var(--border-amber);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+/* .result-title-area is a structural wrapper — no additional styles needed */
+.result-cargo-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.result-route-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.result-actions { display: flex; gap: 10px; }
+.icon-btn {
+  width: 38px; height: 38px;
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.icon-btn:hover { color: var(--amber); border-color: var(--border-amber); }
+
+/* Route path visual */
+.route-path-visual {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.route-path-visual h4 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.path-stops {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+}
+.path-stop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.stop-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--amber);
+  background: var(--bg-900);
+  position: relative;
+  z-index: 1;
+}
+.stop-dot.start, .stop-dot.end { background: var(--amber); }
+.stop-code {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 1px;
+}
+.stop-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.path-connector {
+  flex: 1;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  margin-top: -22px;
+}
+.connector-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber) 0%, rgba(245,158,11,0.3) 100%);
+  position: relative;
+}
+.connector-arrow {
+  position: absolute;
+  right: -4px; top: -4px;
+  width: 10px; height: 10px;
+  border-right: 2px solid var(--amber);
+  border-top: 2px solid var(--amber);
+  transform: rotate(45deg);
+}
+.connector-km {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.connector-rough {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Metrics grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.metric-tile {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+}
+.metric-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.metric-tile-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.metric-tile-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.c-amber { color: var(--amber); }
+.c-green { color: var(--green); }
+.c-blue  { color: var(--blue); }
+.c-red   { color: var(--red); }
+.c-purple{ color: var(--purple); }
+
+/* Segments table */
+.table-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.table-card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.table-card-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.seg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.seg-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 24px;
+  background: var(--bg-700);
+  border-bottom: 1px solid var(--border);
+}
+.seg-table td {
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(87,83,78,0.25);
+  color: var(--text-secondary);
+}
+.seg-table tr:last-child td { border-bottom: none; }
+.seg-table tr:hover td { background: rgba(255,255,255,0.02); }
+.rough-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.rough-track {
+  width: 80px; height: 5px;
+  background: var(--bg-600);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rough-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.r-low  { background: var(--green); }
+.r-mid  { background: #FBBF24; }
+.r-high { background: var(--red); }
+.cost-pill {
+  display: inline-block;
+  background: var(--bg-600);
+  color: var(--text-primary);
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Finance card */
+.finance-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.finance-rows { padding: 8px 0; }
+.finance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(87,83,78,0.25);
+}
+.finance-row:last-child { border-bottom: none; }
+.finance-row.total {
+  background: var(--bg-700);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  margin-top: 8px;
+}
+.finance-row .fr-label { font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.finance-row .fr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.finance-row .fr-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.finance-row.total .fr-label { font-weight: 600; color: var(--text-primary); font-size: 15px; }
+.finance-row.total .fr-value { font-size: 24px; }
+
+/* AI explanation */
+.ai-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+.ai-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ai-card-header h4 {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.ai-pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+.ai-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+
+/* Alternatives tab */
+.alt-card {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+.alt-card:hover { border-color: var(--border-amber); }
+.alt-card.best { border-color: var(--amber); background: rgba(245,158,11,0.06); }
+.alt-rank {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.alt-rank.best { color: var(--amber); }
+.alt-path {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.alt-meta { display: flex; gap: 20px; }
+.alt-meta-item { font-size: 13px; color: var(--text-muted); }
+.alt-meta-item span { color: var(--text-primary); font-weight: 500; }
+.alt-profit-box { text-align: right; }
+.alt-profit {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .planner-layout { grid-template-columns: 1fr; }
+  .planner-panel { position: static; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .result-header { flex-direction: column; }
+  .seg-table th:nth-child(3),
+  .seg-table td:nth-child(3) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/>
+      <rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/>
+      <circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/>
+      <rect x="19" y="14" width="5" height="4" rx="0.5" fill="#7DD3FC" opacity="0.8"/>
+    </svg>
+    CargoPath
+  </a>
+  <ul class="nav-links" id="navMenu">
+    <li><a href="/">Home</a></li>
+    <li><a href="/route-planner" class="active">Route Planner</a></li>
+    <li><a href="/history">Route History</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/profile" class="nav-profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profile
+    </a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="/">Home</a> <span>›</span> Route Planner</div>
+    <h1>Route Planner</h1>
+    <p>Enter your cargo details to find the optimal damage-aware route across India's major logistics hubs.</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="container">
+  <div class="planner-layout">
+
+    <!-- LEFT: FORM PANEL -->
+    <aside class="planner-panel">
+      <div class="panel-tabs">
+        <button class="panel-tab active" onclick="switchTab('route')">Route Details</button>
+        <button class="panel-tab" onclick="switchTab('cargo')">Cargo Info</button>
+      </div>
+
+      <!-- ROUTE TAB -->
+      <div class="panel-body">
+        <div class="panel-section active" id="tab-route">
+
+          <!-- City selectors -->
+          <div style="display:grid;grid-template-columns:1fr 42px 1fr;gap:12px;margin-bottom:6px">
+            <label class="field-label" style="margin-bottom:0">From City</label>
+            <span></span>
+            <label class="field-label" style="margin-bottom:0">To City</label>
+          </div>
+          <div class="city-swap-row">
+            <div class="city-field">
+              <select class="field-input" id="fromCity" style="margin-bottom:0">
+                <option value="">Select origin</option>
+                <option value="DEL">Delhi (DEL)</option>
+                <option value="MUM">Mumbai (MUM)</option>
+                <option value="BLR">Bangalore (BLR)</option>
+                <option value="HYD">Hyderabad (HYD)</option>
+                <option value="CHE">Chennai (CHE)</option>
+                <option value="KOL">Kolkata (KOL)</option>
+                <option value="VIZ">Vizag (VIZ)</option>
+                <option value="AMD">Ahmedabad (AMD)</option>
+                <option value="PUN">Pune (PUN)</option>
+                <option value="LUC">Lucknow (LUC)</option>
+              </select>
+            </div>
+            <button class="swap-btn" onclick="swapCities()" title="Swap cities">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3L4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+            </button>
+            <div class="city-field">
+              <select class="field-input" id="toCity" style="margin-bottom:0">
+                <option value="">Select destination</option>
+                <option value="DEL">Delhi (DEL)</option>
+                <option value="MUM">Mumbai (MUM)</option>
+                <option value="BLR">Bangalore (BLR)</option>
+                <option value="HYD">Hyderabad (HYD)</option>
+                <option value="CHE">Chennai (CHE)</option>
+                <option value="KOL">Kolkata (KOL)</option>
+                <option value="VIZ">Vizag (VIZ)</option>
+                <option value="AMD">Ahmedabad (AMD)</option>
+                <option value="PUN">Pune (PUN)</option>
+                <option value="LUC">Lucknow (LUC)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cargo category -->
+          <label class="field-label">Cargo Category</label>
+          <div class="cargo-type-row">
+            <button class="cargo-type-btn active" id="typeGoods" onclick="setCargoType('goods')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 1 4 0"/></svg>
+              Goods
+            </button>
+            <button class="cargo-type-btn" id="typeCrop" onclick="setCargoType('crop')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2C6 2 2 6 2 12"/><path d="M12 12a5 5 0 0 0-5 5"/><path d="M12 12a5 5 0 0 1 5 5"/></svg>
+              Crop / Produce
+            </button>
+          </div>
+
+          <!-- Goods selector -->
+          <div id="goodsSelector">
+            <label class="field-label">Select Goods Type</label>
+            <select class="field-input" id="goodsSelect" onchange="onCargoChange()">
+              <option value="">Choose goods type</option>
+              <option value="electronics" data-fragility="8" data-profit="35" data-note="Sensitive to shocks; requires cushioning and smooth roads.">Electronics (Fragility 8/10)</option>
+              <option value="furniture"   data-fragility="4" data-profit="12" data-note="Bulky but moderately tolerant of road vibrations.">Furniture (Fragility 4/10)</option>
+              <option value="glassware"   data-fragility="9" data-profit="20" data-note="Extremely fragile; minimal bumps tolerated.">Glassware (Fragility 9/10)</option>
+              <option value="textiles"    data-fragility="2" data-profit="8"  data-note="Very robust; road quality barely matters.">Textiles (Fragility 2/10)</option>
+              <option value="machinery"   data-fragility="3" data-profit="25" data-note="Heavy and sturdy; slight roughness acceptable.">Machinery (Fragility 3/10)</option>
+              <option value="pharmaceuticals" data-fragility="7" data-profit="50" data-note="Temperature + vibration sensitive.">Pharmaceuticals (Fragility 7/10)</option>
+            </select>
+          </div>
+
+          <!-- Crop selector (hidden by default) -->
+          <div id="cropSelector" style="display:none">
+            <label class="field-label">Select Crop Type</label>
+            <div class="crop-follow-up visible">
+              <div class="follow-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                Fragility varies by crop — specify carefully
+              </div>
+            </div>
+            <select class="field-input" id="cropSelect" onchange="onCargoChange()">
+              <option value="">Choose crop</option>
+              <option value="tomato"      data-fragility="9"  data-profit="18" data-note="Highly perishable; bruises easily on rough roads.">Tomato (Fragility 9/10)</option>
+              <option value="potato"      data-fragility="3"  data-profit="7"  data-note="Dense and robust; handles moderate roughness well.">Potato (Fragility 3/10)</option>
+              <option value="onion"       data-fragility="4"  data-profit="9"  data-note="Moderate fragility; some bruising on very rough roads.">Onion (Fragility 4/10)</option>
+              <option value="mango"       data-fragility="8"  data-profit="30" data-note="Soft skin bruises easily; smooth roads preferred.">Mango (Fragility 8/10)</option>
+              <option value="grapes"      data-fragility="10" data-profit="40" data-note="Extremely fragile clusters; require near-perfect roads.">Grapes (Fragility 10/10)</option>
+              <option value="wheat"       data-fragility="1"  data-profit="5"  data-note="Grain cargo; completely indifferent to road roughness.">Wheat (Fragility 1/10)</option>
+              <option value="rice"        data-fragility="2"  data-profit="6"  data-note="Packaged grain; very resilient.">Rice (Fragility 2/10)</option>
+              <option value="banana"      data-fragility="7"  data-profit="22" data-note="Bruises on bumpy roads; moderate care needed.">Banana (Fragility 7/10)</option>
+              <option value="apple"       data-fragility="6"  data-profit="28" data-note="Skin bruises; prefers smoother routes.">Apple (Fragility 6/10)</option>
+              <option value="strawberry"  data-fragility="10" data-profit="45" data-note="Ultra-fragile; requires refrigerated, ultra-smooth transport.">Strawberry (Fragility 10/10)</option>
+              <option value="cabbage"     data-fragility="3"  data-profit="8"  data-note="Leafy but compact; fairly tolerant.">Cabbage (Fragility 3/10)</option>
+              <option value="cauliflower" data-fragility="5"  data-profit="14" data-note="Head can break on sharp jolts.">Cauliflower (Fragility 5/10)</option>
+              <option value="sugarcane"   data-fragility="2"  data-profit="6"  data-note="Fibrous stalks; very resilient to bumps.">Sugarcane (Fragility 2/10)</option>
+              <option value="cotton"      data-fragility="1"  data-profit="10" data-note="Baled cotton is practically indestructible in transit.">Cotton (Fragility 1/10)</option>
+            </select>
+          </div>
+
+          <!-- Cargo info display -->
+          <div class="cargo-info-card" id="cargoInfoCard">
+            <div class="cargo-info-name" id="cargoInfoName">—</div>
+            <div class="fragility-meter">
+              <span class="fragility-meter-label">Fragility</span>
+              <div class="fragility-track"><div class="fragility-fill" id="fragilityFill"></div></div>
+              <span class="fragility-score" id="fragilityScore">—</span>
+            </div>
+            <div class="cargo-info-note" id="cargoInfoNote"></div>
+          </div>
+
+          <!-- Units -->
+          <div class="units-row">
+            <label>Units:</label>
+            <button class="unit-btn" onclick="changeUnits(-1)">−</button>
+            <input type="number" id="units" value="1" min="1" max="999">
+            <button class="unit-btn" onclick="changeUnits(1)">+</button>
+          </div>
+
+          <button class="submit-btn" id="submitBtn" onclick="planRoute()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            FIND BEST ROUTE
+          </button>
+        </div>
+
+        <!-- CARGO INFO TAB -->
+        <div class="panel-section" id="tab-cargo">
+          <div style="margin-bottom:20px">
+            <div class="field-label" style="margin-bottom:12px">Fragility Reference</div>
+            <div id="cargoReferenceList"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT: RESULTS -->
+    <div class="result-area">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </div>
+        <h3>No Route Planned Yet</h3>
+        <p>Fill in your cargo details on the left and hit "Find Best Route" to see the optimal path, profit analysis, and AI insights.</p>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-overlay" id="loadingState">
+        <div class="spinner-ring"></div>
+        <h3>Calculating Optimal Route</h3>
+        <p>Running damage-aware Dijkstra across the road network…</p>
+      </div>
+
+      <!-- Results block -->
+      <div class="result-block" id="resultBlock">
+
+        <!-- Header -->
+        <div class="result-header">
+          <div class="result-title-area">
+            <div class="result-cargo-tag">
+              <div class="ai-pulse"></div>
+              <span id="rCargoTag">—</span>
+            </div>
+            <div class="result-route-title" id="rRouteTitle">—</div>
+          </div>
+          <div class="result-actions">
+            <button class="icon-btn" onclick="saveToHistory()" title="Save to history">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </button>
+            <button class="icon-btn" onclick="printRoute()" title="Print">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Route path visual -->
+        <div class="route-path-visual">
+          <h4>Route Path</h4>
+          <div class="path-stops" id="pathStops"></div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="metrics-grid">
+          <div class="metric-tile">
+            <div class="metric-tile-label">Total Distance</div>
+            <div class="metric-tile-value c-amber" id="rDistance">—</div>
+            <div class="metric-tile-sub">kilometres</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-tile-label">Weighted Cost</div>
+            <div class="metric-tile-value c-blue" id="rCost">—</div>
+            <div class="metric-tile-sub">dist + rough×fragility</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-tile-label">Net Profit</div>
+            <div class="metric-tile-value" id="rProfit">—</div>
+            <div class="metric-tile-sub" id="rProfitLabel">—</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-tile-label">Fragility</div>
+            <div class="metric-tile-value c-purple" id="rFragility">—</div>
+            <div class="metric-tile-sub">out of 10</div>
+          </div>
+        </div>
+
+        <!-- Segment table -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <h4>Segment Breakdown</h4>
+            <span style="font-size:12px;color:var(--text-muted)" id="rSegCount">—</span>
+          </div>
+          <table class="seg-table">
+            <thead>
+              <tr>
+                <th>From → To</th>
+                <th>Distance</th>
+                <th>Roughness</th>
+                <th>Road Quality</th>
+                <th>Edge Cost</th>
+              </tr>
+            </thead>
+            <tbody id="segTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Financials -->
+        <div class="finance-card">
+          <div class="table-card-header">
+            <h4>Financial Analysis</h4>
+            <span style="font-size:12px;color:var(--text-muted)" id="rUnitsLabel">—</span>
+          </div>
+          <div class="finance-rows" id="financeRows"></div>
+        </div>
+
+        <!-- AI Explanation -->
+        <div class="ai-card">
+          <div class="ai-card-header">
+            <div class="ai-pulse"></div>
+            <h4>Gemini AI Route Explanation</h4>
+          </div>
+          <div class="ai-text" id="aiText">Loading AI analysis…</div>
+        </div>
+
+        <!-- Alternatives -->
+        <div class="table-card" id="altBlock">
+          <div class="table-card-header">
+            <h4>Alternative Routes</h4>
+            <span style="font-size:12px;color:var(--text-muted)">Top 3 compared</span>
+          </div>
+          <div style="padding:16px" id="altList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:12px">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect x="1" y="9" width="18" height="12" rx="2" fill="#F59E0B"/><rect x="19" y="12" width="8" height="9" rx="1.5" fill="#D97706"/><circle cx="6" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/><circle cx="23" cy="22" r="3" fill="#1C1917" stroke="#F59E0B" stroke-width="1.5"/></svg>
+        CargoPath
+      </a>
+      <p>Damage-aware cargo routing powered by Modified Dijkstra & Gemini AI.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Navigation</h4>
+      <a href="/route-planner">Route Planner</a>
+      <a href="/history">Route History</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 2025 CargoPath. Built with Flask + Modified Dijkstra + Gemini AI.</p></div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────
+const GRAPH = {
+  DEL:{LUC:[555,2],AMD:[950,3],MUM:[1400,3]},
+  LUC:{DEL:[555,2],KOL:[980,4],HYD:[1490,4]},
+  AMD:{DEL:[950,3],MUM:[530,2],PUN:[670,3]},
+  MUM:{DEL:[1400,3],AMD:[530,2],PUN:[150,1],HYD:[710,4]},
+  PUN:{MUM:[150,1],AMD:[670,3],HYD:[560,4],BLR:[840,5]},
+  HYD:{LUC:[1490,4],MUM:[710,4],PUN:[560,4],BLR:[570,3],CHE:[630,3],VIZ:[625,3]},
+  BLR:{PUN:[840,5],HYD:[570,3],CHE:[345,2]},
+  CHE:{BLR:[345,2],HYD:[630,3],VIZ:[790,3]},
+  VIZ:{HYD:[625,3],CHE:[790,3],KOL:[1070,5]},
+  KOL:{LUC:[980,4],VIZ:[1070,5]}
+};
+const NODE_NAMES={DEL:'Delhi',MUM:'Mumbai',BLR:'Bangalore',HYD:'Hyderabad',CHE:'Chennai',KOL:'Kolkata',VIZ:'Vizag',AMD:'Ahmedabad',PUN:'Pune',LUC:'Lucknow'};
+const ROAD_QUALITY={1:'Expressway',2:'NH Expressway',3:'National Hwy',4:'State Hwy',5:'Mixed Road',6:'District Rd',7:'Rural Rd',8:'Rough Road'};
+
+// ── DIJKSTRA ──────────────────────────────────────────────────
+function dijkstra(start, end, fragility) {
+  const dist={}, prev={}, visited=new Set(), pq=[];
+  Object.keys(GRAPH).forEach(n=>{dist[n]=Infinity;prev[n]=null;});
+  dist[start]=0;
+  pq.push({node:start,cost:0,path:[start],segs:[]});
+  while(pq.length){
+    pq.sort((a,b)=>a.cost-b.cost);
+    const {node,cost,path,segs}=pq.shift();
+    if(visited.has(node))continue;
+    visited.add(node);
+    if(node===end)return{found:true,path,segs,totalCost:cost,totalDist:segs.reduce((s,g)=>s+g.dist,0),totalRough:segs.reduce((s,g)=>s+g.rough,0)};
+    for(const [nbr,[d,r]] of Object.entries(GRAPH[node]||{})){
+      if(visited.has(nbr))continue;
+      const ec=d+(r*fragility);
+      if(cost+ec<dist[nbr]){
+        dist[nbr]=cost+ec;
+        pq.push({node:nbr,cost:cost+ec,path:[...path,nbr],segs:[...segs,{from:node,to:nbr,dist:d,rough:r,ec:Math.round(ec*10)/10}]});
+      }
+    }
+  }
+  return{found:false,path:[],segs:[],totalCost:0,totalDist:0,totalRough:0};
+}
+
+function findAlts(start,end,fragility){
+  const routes=[];
+  const best=dijkstra(start,end,fragility);
+  if(!best.found)return[];
+  routes.push(best);
+  const seen=new Set([best.path.join('->')]);
+  for(const seg of best.segs){
+    const savedFwd=GRAPH[seg.from]?.[seg.to];
+    const savedBwd=GRAPH[seg.to]?.[seg.from];
+    if(GRAPH[seg.from])delete GRAPH[seg.from][seg.to];
+    if(GRAPH[seg.to])delete GRAPH[seg.to][seg.from];
+    const alt=dijkstra(start,end,fragility);
+    if(savedFwd!==undefined&&GRAPH[seg.from])GRAPH[seg.from][seg.to]=savedFwd;
+    if(savedBwd!==undefined&&GRAPH[seg.to])GRAPH[seg.to][seg.from]=savedBwd;
+    if(alt.found&&!seen.has(alt.path.join('->'))){
+      seen.add(alt.path.join('->'));
+      routes.push(alt);
+    }
+    if(routes.length>=3)break;
+  }
+  return routes.sort((a,b)=>a.totalCost-b.totalCost).slice(0,3);
+}
+
+// ── PROFIT ─────────────────────────────────────────────────
+const FUEL=8,DRIVER=2.5,DAMAGE_FACTOR=5;
+function calcProfit(route,fragility,profitPerKm,handlingCost,units){
+  const d=route.totalDist,r=route.totalRough;
+  const revenue=profitPerKm*d*units;
+  const fuel=FUEL*d,driver=DRIVER*d;
+  const handling=handlingCost*units;
+  const damage=DAMAGE_FACTOR*r*fragility*units;
+  const total=fuel+driver+handling+damage;
+  return{revenue:Math.round(revenue),fuel:Math.round(fuel),driver:Math.round(driver),handling:Math.round(handling),damage:Math.round(damage),total:Math.round(total),net:Math.round(revenue-total),profit:revenue>total};
+}
+
+// ── STATE ─────────────────────────────────────────────────
+let cargoType='goods';
+let currentResult=null;
+
+function switchTab(tab){
+  document.querySelectorAll('.panel-tab').forEach((t,i)=>{
+    t.classList.toggle('active',i===(tab==='route'?0:1));
+  });
+  document.querySelectorAll('.panel-section').forEach((s,i)=>{
+    s.classList.toggle('active',i===(tab==='route'?0:1));
+  });
+  if(tab==='cargo')buildCargoRef();
+}
+
+function setCargoType(type){
+  cargoType=type;
+  document.getElementById('typeGoods').classList.toggle('active',type==='goods');
+  document.getElementById('typeCrop').classList.toggle('active',type==='crop');
+  document.getElementById('goodsSelector').style.display=type==='goods'?'block':'none';
+  document.getElementById('cropSelector').style.display=type==='crop'?'block':'none';
+  document.getElementById('cargoInfoCard').classList.remove('visible');
+}
+
+function onCargoChange(){
+  const sel=cargoType==='goods'?document.getElementById('goodsSelect'):document.getElementById('cropSelect');
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt.value){document.getElementById('cargoInfoCard').classList.remove('visible');return;}
+  const fragility=parseInt(opt.dataset.fragility);
+  const note=opt.dataset.note;
+  document.getElementById('cargoInfoCard').classList.add('visible');
+  document.getElementById('cargoInfoName').textContent=opt.value.charAt(0).toUpperCase()+opt.value.slice(1);
+  document.getElementById('cargoInfoNote').textContent=note;
+  const fill=document.getElementById('fragilityFill');
+  const score=document.getElementById('fragilityScore');
+  fill.style.width=(fragility*10)+'%';
+  fill.style.background=fragility>=8?'var(--red)':fragility>=5?'#FBBF24':'var(--green)';
+  score.style.color=fragility>=8?'var(--red)':fragility>=5?'#FBBF24':'var(--green)';
+  score.textContent=fragility+'/10';
+}
+
+function swapCities(){
+  const f=document.getElementById('fromCity'),t=document.getElementById('toCity');
+  const tmp=f.value; f.value=t.value; t.value=tmp;
+}
+
+function changeUnits(d){
+  const el=document.getElementById('units');
+  el.value=Math.max(1,Math.min(999,parseInt(el.value||1)+d));
+}
+
+// ── PLAN ROUTE ─────────────────────────────────────────────
+async function planRoute(){
+  const from=document.getElementById('fromCity').value;
+  const to=document.getElementById('toCity').value;
+  const units=parseInt(document.getElementById('units').value)||1;
+  const sel=cargoType==='goods'?document.getElementById('goodsSelect'):document.getElementById('cropSelect');
+  const opt=sel.options[sel.selectedIndex];
+
+  if(!from){showToast('Please select a departure city.','⚠');return;}
+  if(!to){showToast('Please select a destination city.','⚠');return;}
+  if(from===to){showToast('Departure and destination cannot be the same.','⚠');return;}
+  if(!opt.value){showToast('Please select a cargo type.','⚠');return;}
+
+  const cargoName=opt.value;
+
+  // Show loading
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultBlock').classList.remove('visible');
+  document.getElementById('loadingState').classList.add('visible');
+
+  try{
+    // Call Flask backend — runs real Dijkstra + saves to SQLite automatically
+    const body={
+      start:from,
+      destination:to,
+      good:cargoType==='crop'?'crop':cargoName,
+      units:units
+    };
+    if(cargoType==='crop') body.crop=cargoName;
+
+    const res=await fetch('/api/route',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const data=await res.json();
+
+    document.getElementById('loadingState').classList.remove('visible');
+
+    if(!data.success){
+      showToast(data.error||'Could not calculate route.','✗');
+      document.getElementById('emptyState').style.display='flex';
+      return;
+    }
+
+    // Map API response → local format for renderResult
+    const route=apiRouteToLocal(data.route);
+    const profit=apiProfitToLocal(data.financial_analysis);
+    const aiText=data.ai_explanation||'';
+
+    // Build alternatives using local Dijkstra for display only
+    const fragility=data.cargo.fragility;
+    const alts=findAlts(from,to,fragility);
+
+    currentResult={from,to,cargoName,fragility,units,route,profit,alts,aiText};
+    renderResult(from,to,cargoName,fragility,units,route,profit,alts,aiText);
+    document.getElementById('resultBlock').classList.add('visible');
+    showToast('Route saved to history!','✓');
+
+  }catch(err){
+    document.getElementById('loadingState').classList.remove('visible');
+    document.getElementById('emptyState').style.display='flex';
+    showToast('Network error — could not connect to server.','✗');
+    console.error(err);
+  }
+}
+
+// Map API route response → local format used by renderResult
+function apiRouteToLocal(r){
+  const segs=(r.segments||[]).map(s=>({
+    from:s.from, to:s.to, dist:s.distance_km, rough:s.roughness, ec:s.edge_cost
+  }));
+  return{
+    found:true,
+    path:r.path_codes||r.path.map(p=>p.code||p),
+    segs:segs,
+    totalCost:r.total_weighted_cost,
+    totalDist:r.total_distance_km,
+    totalRough:r.total_roughness_sum
+  };
+}
+
+// Map API profit response → local format used by renderResult
+function apiProfitToLocal(p){
+  return{
+    revenue:p.revenue_inr,
+    fuel:p.fuel_cost_inr,
+    driver:p.driver_cost_inr,
+    handling:p.handling_cost_inr,
+    damage:p.damage_loss_inr,
+    total:p.total_cost_inr,
+    net:p.net_profit_inr,
+    profit:p.profitable
+  };
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+function renderResult(from,to,cargo,frag,units,route,profit,alts){
+  // Header
+  document.getElementById('rCargoTag').textContent=cargo.toUpperCase()+' — Fragility '+frag+'/10 — '+units+' unit'+(units>1?'s':'');
+  document.getElementById('rRouteTitle').textContent=NODE_NAMES[from]+' → '+NODE_NAMES[to];
+
+  // Metrics
+  document.getElementById('rDistance').textContent=route.totalDist.toLocaleString()+' km';
+  document.getElementById('rCost').textContent=route.totalCost.toLocaleString();
+  const profitEl=document.getElementById('rProfit');
+  profitEl.textContent='₹'+Math.abs(profit.net).toLocaleString();
+  profitEl.className='metric-tile-value '+(profit.profit?'c-green':'c-red');
+  document.getElementById('rProfitLabel').textContent=profit.profit?'Profitable ✓':'Loss ✗';
+  document.getElementById('rFragility').textContent=frag;
+
+  // Path visual
+  const stopsEl=document.getElementById('pathStops');
+  stopsEl.innerHTML='';
+  route.path.forEach((node,i)=>{
+    const stopDiv=document.createElement('div');
+    stopDiv.className='path-stop';
+    const isEnd=i===route.path.length-1;
+    stopDiv.innerHTML=`<div class="stop-dot ${i===0?'start':isEnd?'end':''}"></div><div class="stop-code">${node}</div><div class="stop-name">${NODE_NAMES[node]}</div>`;
+    stopsEl.appendChild(stopDiv);
+    if(!isEnd){
+      const seg=route.segs[i];
+      const conn=document.createElement('div');
+      conn.className='path-connector';
+      conn.innerHTML=`<div class="connector-line"><div class="connector-arrow"></div></div><div class="connector-km">${seg.dist} km</div><div class="connector-rough">R:${seg.rough}</div>`;
+      stopsEl.appendChild(conn);
+    }
+  });
+
+  // Segments table
+  const tbody=document.getElementById('segTableBody');
+  tbody.innerHTML='';
+  document.getElementById('rSegCount').textContent=route.segs.length+' segments';
+  route.segs.forEach(s=>{
+    const rClass=s.rough<=2?'r-low':s.rough<=4?'r-mid':'r-high';
+    const quality=ROAD_QUALITY[s.rough]||'Poor Road';
+    tbody.innerHTML+=`<tr>
+      <td style="color:var(--text-primary);font-weight:500">${NODE_NAMES[s.from]} → ${NODE_NAMES[s.to]}</td>
+      <td>${s.dist.toLocaleString()} km</td>
+      <td><div class="rough-bar-wrap"><div class="rough-track"><div class="rough-fill ${rClass}" style="width:${s.rough*10}%"></div></div><span style="font-size:13px">${s.rough}/10</span></div></td>
+      <td style="color:${s.rough<=2?'var(--green)':s.rough<=4?'#FBBF24':'var(--red)'};font-size:13px">${quality}</td>
+      <td><span class="cost-pill">${s.ec}</span></td>
+    </tr>`;
+  });
+
+  // Finance
+  document.getElementById('rUnitsLabel').textContent=units+' unit'+(units>1?'s':'');
+  const finRows=[
+    {label:'Revenue',val:profit.revenue,dot:'#86EFAC',sign:'+',color:'var(--green)'},
+    {label:'Fuel Cost',val:profit.fuel,dot:'#FCA5A5',sign:'−',color:'var(--red)'},
+    {label:'Driver Cost',val:profit.driver,dot:'#FBBF24',sign:'−',color:'#FBBF24'},
+    {label:'Handling Cost',val:profit.handling,dot:'#C4B5FD',sign:'−',color:'var(--purple)'},
+    {label:'Damage Loss',val:profit.damage,dot:'#F97316',sign:'−',color:'#F97316'},
+  ];
+  const fr=document.getElementById('financeRows');
+  fr.innerHTML='';
+  finRows.forEach(r=>{
+    fr.innerHTML+=`<div class="finance-row"><span class="fr-label"><span class="fr-dot" style="background:${r.dot}"></span>${r.label}</span><span class="fr-value" style="color:${r.color}">${r.sign}₹${r.val.toLocaleString()}</span></div>`;
+  });
+  fr.innerHTML+=`<div class="finance-row total"><span class="fr-label">Net Profit</span><span class="fr-value" style="color:${profit.profit?'var(--green)':'var(--red)'}">${profit.profit?'+':'−'}₹${Math.abs(profit.net).toLocaleString()}</span></div>`;
+
+  // AI Explanation from Gemini (passed from server response)
+  const aiEl=document.getElementById('aiText');
+  aiEl.textContent='';
+  const aiText=arguments[8]||generateAIExplanation(from,to,cargo,frag,route,profit).join('');
+  let i=0;
+  const aiInt=setInterval(()=>{
+    if(i<aiText.length){aiEl.textContent+=aiText[i];i++;}
+    else clearInterval(aiInt);
+  },12);
+
+  // Alternatives
+  const altList=document.getElementById('altList');
+  altList.innerHTML='';
+  alts.forEach((alt,idx)=>{
+    const ap=calcProfit(alt,frag,10,50,units);
+    const isBest=idx===0;
+    altList.innerHTML+=`<div class="alt-card ${isBest?'best':''}">
+      <div>
+        <div class="alt-rank ${isBest?'best':''}">${isBest?'★ BEST ROUTE':'ALTERNATIVE '+(idx+1)}</div>
+        <div class="alt-path">${alt.path.map(n=>NODE_NAMES[n]).join(' → ')}</div>
+        <div class="alt-meta">
+          <div class="alt-meta-item">Distance: <span>${alt.totalDist.toLocaleString()} km</span></div>
+          <div class="alt-meta-item">Cost: <span>${alt.totalCost.toLocaleString()}</span></div>
+          <div class="alt-meta-item">Segments: <span>${alt.segs.length}</span></div>
+        </div>
+      </div>
+      <div class="alt-profit-box">
+        <div class="alt-profit" style="color:${ap.profit?'var(--green)':'var(--red)'}">${ap.profit?'+':'−'}₹${Math.abs(ap.net).toLocaleString()}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${ap.profit?'Profitable':'Loss'}</div>
+      </div>
+    </div>`;
+  });
+}
+
+function generateAIExplanation(from,to,cargo,frag,route,profit){
+  const fromName=NODE_NAMES[from],toName=NODE_NAMES[to];
+  const smooth=route.segs.filter(s=>s.rough<=2).length;
+  const rough=route.segs.filter(s=>s.rough>=5).length;
+  const worstSeg=route.segs.reduce((a,b)=>b.rough>a.rough?b:a,route.segs[0]);
+  const text=`The optimal route from ${fromName} to ${toName} was selected based on the cargo fragility score of ${frag}/10 for ${cargo}. The CargoPath Modified Dijkstra algorithm prioritised smoother road corridors over purely shorter distances, since rough roads impose a higher damage multiplier (roughness × ${frag}) on the weighted cost function. `+
+    `This route uses ${smooth} expressway or national highway segment${smooth!==1?'s':''} and ${rough} mixed-quality stretch${rough!==1?'es':''}. `+
+    `The most critical segment is ${NODE_NAMES[worstSeg.from]} → ${NODE_NAMES[worstSeg.to]} (roughness ${worstSeg.rough}/10), where reduced vehicle speed and extra cushioning are advised to minimise cargo damage. `+
+    `The estimated net result is ${profit.profit?'a profit':'a loss'} of ₹${Math.abs(profit.net).toLocaleString()} after accounting for fuel, driver, handling, and projected damage costs. `+
+    (frag>=8?`Given the extreme fragility of ${cargo}, the driver should maintain speeds below 60 km/h on rougher stretches and perform pre-departure packaging checks.`:`The cargo is relatively resilient; standard packing should suffice, but keep an eye on the highway transitions.`);
+  return text.split('');
+}
+
+// ── SAVE TO HISTORY ─────────────────────────────────────────
+function saveToHistory(){
+  // Routes are automatically saved to the database by the server
+  // on every /api/route call — just navigate to history page
+  window.location.href='/history';
+}
+
+function printRoute(){window.print();}
+
+// ── CARGO REFERENCE ─────────────────────────────────────────
+const ALL_CARGO=[
+  {name:'Strawberry',f:10,c:'crop'},{name:'Grapes',f:10,c:'crop'},{name:'Glassware',f:9,c:'goods'},
+  {name:'Tomato',f:9,c:'crop'},{name:'Electronics',f:8,c:'goods'},{name:'Mango',f:8,c:'crop'},
+  {name:'Pharmaceuticals',f:7,c:'goods'},{name:'Banana',f:7,c:'crop'},{name:'Apple',f:6,c:'crop'},
+  {name:'Cauliflower',f:5,c:'crop'},{name:'Onion',f:4,c:'crop'},{name:'Furniture',f:4,c:'goods'},
+  {name:'Machinery',f:3,c:'goods'},{name:'Cabbage',f:3,c:'crop'},{name:'Potato',f:3,c:'crop'},
+  {name:'Rice',f:2,c:'crop'},{name:'Sugarcane',f:2,c:'crop'},{name:'Textiles',f:2,c:'goods'},
+  {name:'Wheat',f:1,c:'crop'},{name:'Cotton',f:1,c:'crop'}
+];
+function buildCargoRef(){
+  const el=document.getElementById('cargoReferenceList');
+  el.innerHTML='';
+  ALL_CARGO.forEach(c=>{
+    const col=c.f>=8?'var(--red)':c.f>=5?'#FBBF24':'var(--green)';
+    el.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(87,83,78,0.3)">
+      <div style="flex:1;font-size:14px">${c.name} <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">${c.c}</span></div>
+      <div style="width:80px;height:5px;background:var(--bg-600);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.f*10}%;background:${col};border-radius:3px"></div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:${col};min-width:32px;text-align:right">${c.f}</div>
+    </div>`;
+  });
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg,icon='ℹ'){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span style="font-size:16px">${icon}</span> ${msg}`;
+  t.style.display='flex';
+  clearTimeout(t._timeout);
+  t._timeout=setTimeout(()=>{t.classList.add('fade-out');setTimeout(()=>{t.style.display='none';t.classList.remove('fade-out');},300);},3000);
+}
+
+// ── NAV TOGGLE ─────────────────────────────────────────────
+document.getElementById('navToggle').addEventListener('click',()=>{
+  document.getElementById('navMenu').classList.toggle('open');
+});
+
+// Populate from URL params (deep linking)
+window.addEventListener('DOMContentLoaded',()=>{
+  const p=new URLSearchParams(location.search);
+  if(p.get('from'))document.getElementById('fromCity').value=p.get('from');
+  if(p.get('to'))document.getElementById('toCity').value=p.get('to');
+  buildCargoRef();
+});
+</script>
+</body>
+</html>
