@@ -21,6 +21,6 @@ Features
 •	 Smart route recommendations based on traffic & distance
 
 Author
-Kashish Arora
+Kashish Arora,
 J.Vaisshnave
 
